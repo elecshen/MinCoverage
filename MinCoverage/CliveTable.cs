@@ -1,11 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Drawing;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace MinCoverage
+﻿namespace MinCoverage
 {
     public class CliveTable
     {
@@ -116,17 +109,17 @@ namespace MinCoverage
 
         public void ShowTable()
         {
-            Console.Write(String.Format("{0, " + Vectors.First().Length + "}", ""));
+            Console.Write(string.Format("{0, " + Vectors.First().Length + "}", ""));
             string format = "{0, " + (Vectors.First().Length + 1) + "}";
             foreach (var p in Points)
-                Console.Write(String.Format(format, p));
+                Console.Write(string.Format(format, p));
             Console.WriteLine();
             for (int r = 0; r < Vectors.Count; r++)
             {
                 Console.Write(Vectors[r]);
                 for (int c = 0; c < Points.Count; c++)
                 {
-                    Console.Write(String.Format(format, Table[r, c]));
+                    Console.Write(string.Format(format, Table[r, c]));
                 }
                 Console.WriteLine();
             }
@@ -359,7 +352,6 @@ namespace MinCoverage
                 }
                 NF.Add(sum);
             }
-
 
             while(NF.Count > 1)
             {

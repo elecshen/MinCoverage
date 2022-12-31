@@ -1,7 +1,4 @@
-﻿using System;
-using System.Xml.Serialization;
-
-namespace MinCoverage
+﻿namespace MinCoverage
 {
     public class Program
     {
