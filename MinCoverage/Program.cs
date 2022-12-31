@@ -5,7 +5,9 @@
 
         static void Main(string[] args)
         {
-            List<string> vectors = new()
+            // Функция заданная интервалами
+            // Имеет ядерные строки и циклический остаток
+            List<string> input1 = new()
             {
                 "000-",
                 "01-1",
@@ -16,7 +18,9 @@
                 "101-",
                 "--01"
             };
-            string[] vectors2 = new string[]
+            // Массив значений таблицы
+            // Имеет ядерные строки, строку-предшественницу, столбец-последователь и циклический остаток
+            string[] input2 = new string[]
             {
                 "01010100",
                 "01100000",
@@ -26,11 +30,23 @@
                 "00001101",
                 "00001011"
             };
-            CliveTable ct = new(vectors);
+            // Массив значений таблицы
+            // Имеет ядерные строки и однострочное покрытие
+            string[] input3 = new string[]
+            {
+                "010111",
+                "000000",
+                "010001",
+                "000110",
+                "101000",
+            };
+            CliveTable ct = new(input3);
             List<string> sDNF = new();
             while (true)
             {
                 ct.ShowTable();
+                if (ct.FindSingleLineCoverage(sDNF))
+                    break;
                 if (ct.CoreRule(sDNF))
                     continue;
                 if (ct.PredRowRule())

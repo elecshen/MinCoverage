@@ -2,33 +2,45 @@
 {
     public class CliveTable
     {
-        public List<string> Vectors;
+        public List<string> Intervals;
         public List<string> Points;
         public short[,] Table;
 
+        /// <summary>
+        /// Конструктор для непосредственного заполнения таблицы значениями,
+        /// названия столбцов и строк заполняются автоматически
+        /// </summary>
+        /// <param name="valueArr">Массив строк, каждая из которых хранит значения строки таблицы(например, "00101")</param>
         public CliveTable(string[] valueArr)
         {
             FillVectorsAndPoints(valueArr.Length, valueArr[0].Length);
             FillTableFromValues(valueArr);
         }
 
-        public CliveTable(List<string> vectors)
+        /// <summary>
+        /// Конструкто заполняющий таблицу по списку интервалов, которые задают функцию
+        /// </summary>
+        /// <param name="intervals">Список строк, каждая из которых хранит интервал(например, "10-0-")</param>
+        public CliveTable(List<string> intervals)
         {
-            this.Vectors = vectors;
+            this.Intervals = intervals;
             AutoFillPoints();
             AutoFillTable();
         }
 
+        // Задает обозначения строк латинскими буквами (А, B, C, D...)
+        // Значения столбцов задаются цифрами (1, 2, 3, 4...)
         private void FillVectorsAndPoints(int rows, int columns)
         {
-            Vectors = new List<string>();
+            Intervals = new List<string>();
             Points = new List<string>();
             for (int i = 0; i < rows; i++)
-                Vectors.Add(Convert.ToChar('A' + i).ToString());
+                Intervals.Add(Convert.ToChar('A' + i).ToString());
             for (int i = 0; i < columns; i++)
                 Points.Add((i + 1).ToString());
         }
 
+        // Заполняет таблицу из передаваемого списка строк
         private void FillTableFromValues(string[] valueArr)
         {
             Table = new short[valueArr.Length, valueArr[0].Length];
@@ -43,63 +55,69 @@
             }
         }
 
+        // Находит все точки которые задаются списком интервалов функции (СДНФ функции)
         private void AutoFillPoints()
         {
             Points = new List<string>();
-            foreach (var v in Vectors)
+            foreach (var v in Intervals)
                 Points.AddRange(GetPoints(v));
             Points = Points.Distinct().ToList();
             if (Points.Contains(""))
                 Points.Remove("");
         }
 
-        private List<string> GetPoints(string vector)
+        // Получает на вход интервал, а возвращает список векторов интервала
+        private List<string> GetPoints(string interval)
         {
-            if (!vector.Contains('-'))
-                return new List<string>() { vector };
-            char[] chArr = vector.ToCharArray();
-            string vector1 = "", vector2 = "";
+            if (!interval.Contains('-'))
+                return new List<string>() { interval };
+            char[] chArr = interval.ToCharArray();
+            string interval1 = "", interval2 = "";
             bool isFindDash = false;
             for (int i = 0; i < chArr.Length; i++)
             {
                 if (chArr[i] == '-' && !isFindDash)
                 {
-                    vector2 = vector1;
-                    vector1 += '0';
-                    vector2 += '1';
+                    interval2 = interval1;
+                    interval1 += '0';
+                    interval2 += '1';
                     isFindDash = true;
                 }
                 else if (isFindDash)
                 {
-                    vector1 += chArr[i];
-                    vector2 += chArr[i];
+                    interval1 += chArr[i];
+                    interval2 += chArr[i];
                 }
                 else
-                    vector1 += chArr[i];
+                    interval1 += chArr[i];
             }
             List<string> outStr = new();
-            outStr.AddRange(GetPoints(vector1));
-            outStr.AddRange(GetPoints(vector2));
+            outStr.AddRange(GetPoints(interval1));
+            outStr.AddRange(GetPoints(interval2));
             return outStr;
         }
 
+        // Заполняет таблицу 1 и 0 по спису интервалов и СДНФ. Если на пересечении вектора и интервала,
+        // вектор принадлежит интервалу, то записывается 1, в противном случае 0 
         private void AutoFillTable()
         {
-            Table = new short[Vectors.Count, Points.Count];
-            for (int r = 0; r < Vectors.Count; r++)
+            Table = new short[Intervals.Count, Points.Count];
+            for (int r = 0; r < Intervals.Count; r++)
             {
                 for (int c = 0; c < Points.Count; c++)
                 {
-                    Table[r, c] = IsInVector(Vectors[r], Points[c]);
+                    Table[r, c] = IsInInterval(Intervals[r], Points[c]);
                 }
             }
         }
 
-        private short IsInVector(string vector, string point)
+        // Проверяет принадлежит ли вектор интервалу
+        // Если принадлежит возвращается 1, в противном случае 0
+        private short IsInInterval(string interval, string point)
         {
-            var v = vector.ToCharArray();
+            var v = interval.ToCharArray();
             var p = point.ToCharArray();
-            for (int i = 0; i < vector.Length; i++)
+            for (int i = 0; i < interval.Length; i++)
             {
                 if (!(v[i] == p[i] || v[i] == '-'))
                     return 0;
@@ -107,16 +125,17 @@
             return 1;
         }
 
+        // Выводит таблицу в консоль
         public void ShowTable()
         {
-            Console.Write(string.Format("{0, " + Vectors.First().Length + "}", ""));
-            string format = "{0, " + (Vectors.First().Length + 1) + "}";
+            Console.Write(string.Format("{0, " + Intervals.First().Length + "}", ""));
+            string format = "{0, " + (Intervals.First().Length + 1) + "}";
             foreach (var p in Points)
                 Console.Write(string.Format(format, p));
             Console.WriteLine();
-            for (int r = 0; r < Vectors.Count; r++)
+            for (int r = 0; r < Intervals.Count; r++)
             {
-                Console.Write(Vectors[r]);
+                Console.Write(Intervals[r]);
                 for (int c = 0; c < Points.Count; c++)
                 {
                     Console.Write(string.Format(format, Table[r, c]));
@@ -125,29 +144,34 @@
             }
         }
 
+        // Удаляет строку из таблицы по номеру, смещаяя строки таблицы, находящиеся ниже удаляемой, наверх
+        // Из списка интервалов удаляется обозначение строки
         public void DeleteRow(int row)
         {
-            for(int r = row; r < Vectors.Count - 1; r++)
+            for(int r = row; r < Intervals.Count - 1; r++)
             {
                 for(int c=0;c<Points.Count;c++)
                 {
                     Table[r,c] = Table[r+1,c];
                 }
             }
-            Vectors.RemoveAt(row);
+            Intervals.RemoveAt(row);
         }
 
-        public void DeleteRow(string vector)
+        // Определяет номер строки по содержимому и запускает функицию удаления по номеру
+        public void DeleteRow(string interval)
         {
-            int num = Vectors.IndexOf(vector);
+            int num = Intervals.IndexOf(interval);
             DeleteRow(num);
         }
 
+        // Удаляет столбец из таблицы по номеру, смещаяя столбцы таблицы, находящиеся правее удаляемой, влево
+        // Из списка точек удаляется обозначение столбца
         public void DeleteColoum(int coloum)
         {
             for (int c = coloum; c < Points.Count - 1; c++)
             {
-                for (int r = 0; r < Vectors.Count; r++)
+                for (int r = 0; r < Intervals.Count; r++)
                 {
                     Table[r, c] = Table[r, c + 1];
                 }
@@ -155,18 +179,34 @@
             Points.RemoveAt(coloum);
         }
 
+        // Определяет номер столбца по содержимому и запускает функицию удаления по номеру
         public void DeleteColoum(string coloum)
         {
             int num = Points.IndexOf(coloum);
             DeleteColoum(num);
         }
 
+        // Ищет строку, которая покрывает всю таблицу
+        public bool FindSingleLineCoverage(List<string> sDNF)
+        {
+            for (int r = 0; r < Intervals.Count; r++)
+            {
+                if (FindCoveringColoums(r).Count == Points.Count)
+                {
+                    sDNF.Add(Intervals[r]);
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        // Ищет первый столбец, имеющий только однну строку со значением 1, и возвращает номер этой строки
         private int FindCoreRow()
         {
             int flag = -1;
             for (int c = 0; c < Points.Count; c++)
             {
-                for (int r = 0; r < Vectors.Count; r++)
+                for (int r = 0; r < Intervals.Count; r++)
                 {
                     if (flag == -1 && Table[r, c] == 1)
                         flag = r;
@@ -182,6 +222,7 @@
             return flag;
         }
 
+        // Возвращает список столбцов, которые имеют значение 1 на пересечении с данной строкой
         private List<string> FindCoveringColoums(int row)
         {
             List<string> coloums = new();
@@ -193,11 +234,12 @@
             return coloums;
         }
 
+        // Ищет и затем удаляет строки, которые состоят только из значений 0
         private List<string> FindEmptyRow()
         {
             List<string> emptyRows = new();
             bool isEmpty;
-            for(int r = 0; r < Vectors.Count; r++)
+            for(int r = 0; r < Intervals.Count; r++)
             {
                 isEmpty = true;
                 for (int c = 0; c < Points.Count; c++)
@@ -207,11 +249,13 @@
                         break;
                     }
                 if(isEmpty)
-                    emptyRows.Add(Vectors[r]);
+                    emptyRows.Add(Intervals[r]);
             }
             return emptyRows;
         }
 
+        // Функция удаляет первую попавшуюся ядерную строку и после очищает пустые строки, если такие есть
+        // Обозначения ядерных строк добавляются в получаемый список
         public bool CoreRule(List<string> sDNF)
         {
             bool isSmthDone = false;
@@ -223,7 +267,7 @@
                 {
                     if (!isSmthDone)
                         isSmthDone = true;
-                    sDNF.Add(Vectors[row]);
+                    sDNF.Add(Intervals[row]);
                     foreach (var c in FindCoveringColoums(row))
                     {
                         DeleteColoum(c);
@@ -241,11 +285,12 @@
             return isSmthDone;
         }
 
-        // Возвращает номер большего, 0 если равны и -1 если не сравнимы
+        // Сравнивает столбцы таблицы по их номерам
+        // Возвращает номер большего столбца, 0 если равны и -1 если не сравнимы
         private int IsComparableColoums(int first, int second)
         {
             int fOs = 0;
-            for (int r = 0; r < Vectors.Count; r++)
+            for (int r = 0; r < Intervals.Count; r++)
             {
                 if (Table[r, first] != Table[r,second])
                 {
@@ -266,6 +311,8 @@
             return fOs;
         }
 
+        // Сравнивает строки таблицы по их номерам
+        // Возвращает номер большей строки, 0 если равны и -1 если не сравнимы
         private int IsComparableRows(int first, int second)
         {
             int fOs = 0;
@@ -290,17 +337,18 @@
             return fOs;
         }
 
+        // Ищет в таблице сравнимые строки и удаляет меньшую из них
         public bool PredRowRule()
         {
             int compareResult;
-            foreach (var rFirst in Vectors.ToList())
+            foreach (var rFirst in Intervals.ToList())
             {
-                if (rFirst == Vectors.Last())
+                if (rFirst == Intervals.Last())
                     break;
-                int rFirstNum = Vectors.IndexOf(rFirst);
-                foreach (var rSecond in Vectors.GetRange(rFirstNum + 1, Vectors.Count - rFirstNum - 1))
+                int rFirstNum = Intervals.IndexOf(rFirst);
+                foreach (var rSecond in Intervals.GetRange(rFirstNum + 1, Intervals.Count - rFirstNum - 1))
                 {
-                    int rSecondNum = Vectors.IndexOf(rSecond);
+                    int rSecondNum = Intervals.IndexOf(rSecond);
                     compareResult = IsComparableRows(rFirstNum, rSecondNum);
                     if (compareResult == -1)
                         continue;
@@ -314,6 +362,7 @@
             return false;
         }
 
+        // Ищет в таблице сравнимые столбцы и удаляет больший из них
         public bool FollColoumRule()
         {
             int compareResult;
@@ -338,21 +387,25 @@
             return false;
         }
 
+        // Составляет из обозначений строк таблицы КНФ и преобразует её в ДНФ
+        // Элемент наименьшего ранга возвращаяется как список обозначений строк
         public List<string> KNFtoDNF()
         {
+            // Составление КНФ
             List<List<List<string>>> NF = new();
             List<List<string>> sum, sum2;
             for(int c = 0; c < Points.Count; c++)
             {
                 sum = new();
-                for(int r = 0; r < Vectors.Count; r++)
+                for(int r = 0; r < Intervals.Count; r++)
                 {
                     if(Table[r, c] == 1)
-                        sum.Add(new List<string>() { Vectors[r] });
+                        sum.Add(new List<string>() { Intervals[r] });
                 }
                 NF.Add(sum);
             }
 
+            // Преобразование в ДНФ
             while(NF.Count > 1)
             {
                 sum = NF[0];
@@ -363,6 +416,7 @@
                 NF.Add(sum);
             }
 
+            // Поиск элемента ДНФ наименьшего ранга
             sum = NF[0];
             int minLen = int.MaxValue;
             List<string> min = null;
@@ -378,6 +432,7 @@
             return min ?? new List<string>();
         }
 
+        // Преоразует два элемента КНФ в ДНФ получаемую потём перемножения элементов друг на друга
         private List<List<string>> MultiplyToSum(List<List<string>> sum1, List<List<string>> sum2)
         {
             List<List<string>> sum = new();
@@ -389,11 +444,13 @@
             return MakeUniq(sum);
         }
 
+        // Удаляет одинаковые элементы
         private List<List<string>> MakeUniq(List<List<string>> sum)
         {
             return sum.DistinctBy(x => GetStrKey(x)).ToList();
         }
 
+        // Создаёт строку ключ, которая позваляет легче сравнивать списки
         private string GetStrKey(List<string> x)
         {
             x.Sort();
@@ -403,6 +460,7 @@
             return key;
         }
 
+        // Делает поглощения элементов
         private void Unite(List<List<string>> sum)
         {
             string key1, key2;
